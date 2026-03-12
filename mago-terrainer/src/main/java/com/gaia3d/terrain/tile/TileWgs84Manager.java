@@ -1075,8 +1075,11 @@ public class TileWgs84Manager {
             }
         }
 
-        awaitFuturesAndRethrow(futures);
-        executor.shutdown();
+        try {
+            awaitFuturesAndRethrow(futures);
+        } finally {
+            executor.shutdown();
+        }
     }
 
     public void processResizeRasters(String terrainElevationDataFolderPath, String currentFolderPath) throws IOException, FactoryException {
@@ -1182,8 +1185,11 @@ public class TileWgs84Manager {
             }));
         }
 
-        awaitFuturesAndRethrow(futures);
-        executor.shutdown();
+        try {
+            awaitFuturesAndRethrow(futures);
+        } finally {
+            executor.shutdown();
+        }
 
         // now check if exist folders inside the terrainElevationDataFolderPath
         List<String> folderNames = new ArrayList<>();
@@ -1261,7 +1267,6 @@ public class TileWgs84Manager {
                     Vector2d pixelSizeMeters = GaiaGeoTiffUtils.getPixelSizeMeters(originalGridCoverage2D);
 
                     GeometryFactory gf = new GeometryFactory();
-                    CoordinateReferenceSystem crsTarget = originalGridCoverage2D.getCoordinateReferenceSystem2D();
                     CoordinateReferenceSystem crsWgs84 = CRS.decode("EPSG:4326", true);
                     MathTransform targetToWgs = CRS.findMathTransform(crsTarget, crsWgs84);
 
@@ -1284,8 +1289,11 @@ public class TileWgs84Manager {
             }));
         }
 
-        awaitFuturesAndRethrow(futures);
-        executor.shutdown();
+        try {
+            awaitFuturesAndRethrow(futures);
+        } finally {
+            executor.shutdown();
+        }
 
         availableTileSet.recombineTileRanges();
 
