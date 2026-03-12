@@ -20,7 +20,8 @@ public class FileUtils {
         if (file.exists() && file.isDirectory()) {
             return;
         } else {
-            if (!file.mkdirs()) {
+            // Use mkdirs() and then re-check existence to handle concurrent creation safely
+            if (!file.mkdirs() && !file.exists()) {
                 throw new RuntimeException("Failed to create folder: " + filePath);
             }
         }

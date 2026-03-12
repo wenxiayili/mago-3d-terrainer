@@ -1,11 +1,12 @@
 package com.gaia3d.terrain.tile;
 
 import com.gaia3d.command.GlobalOptions;
-import jdk.jfr.Experimental;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -13,48 +14,39 @@ import java.util.concurrent.TimeUnit;
 
 @Getter
 @Slf4j
-@Experimental
 public class GaiaThreadPool {
     private static GaiaThreadPool instance;
 
     private final ExecutorService executorService;
-    private final byte multiThreadCount;
+    private final int multiThreadCount;
 
-    public GaiaThreadPool() {
-        this.multiThreadCount = setDefaultThreadCount();
-        this.executorService = Executors.newFixedThreadPool(multiThreadCount);
+    public GaiaThreadPool(int threadCount) {
+        this.multiThreadCount = threadCount;
+        this.executorService = Executors.newFixedThreadPool(threadCount);
     }
 
     public static GaiaThreadPool getInstance() {
-        GaiaThreadPool.instance = new GaiaThreadPool();
-        return GaiaThreadPool.instance;
+        if (instance == null || instance.executorService.isShutdown()) {
+            int threadCount = Math.max(1, GlobalOptions.getInstance().getThreadCount());
+            instance = new GaiaThreadPool(threadCount);
+        }
+        return instance;
     }
 
     public void execute(List<Runnable> tasks) throws InterruptedException {
-        GlobalOptions globalOptions = GlobalOptions.getInstance();
-        try {
-            for (Runnable task : tasks) {
-                Future<?> future = executorService.submit(task);
-                if (globalOptions.isDebugMode()) {
-                    future.get();
-                }
+        List<Future<?>> futures = new ArrayList<>(tasks.size());
+        for (Runnable task : tasks) {
+            futures.add(executorService.submit(task));
+        }
+        for (Future<?> future : futures) {
+            try {
+                future.get();
+            } catch (ExecutionException e) {
+                log.error("A parallel task failed.", e.getCause());
+                throw new RuntimeException(e.getCause());
             }
-        } catch (Exception e) {
-            log.error("Failed to execute thread.", e);
-            throw new RuntimeException(e);
         }
         executorService.shutdown();
-        do {
-            if (executorService.isTerminated()) {
-                executorService.shutdownNow();
-            }
-        } while (!executorService.awaitTermination(2, TimeUnit.SECONDS));
-    }
-
-    private byte setDefaultThreadCount() {
-        // Get the number of processors available to the Java virtual machine.
-        int processorCount = Runtime.getRuntime().availableProcessors();
-        int threadCount = processorCount > 1 ? processorCount / 2 : 1;
-        return (byte) threadCount;
+        executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
     }
 }
