@@ -76,6 +76,7 @@ public class GlobalOptions {
     // Migration options
     private int mosaicSize;
     private int maxRasterSize;
+    private int threadCount;
 
     // Temporary paths for processing
     private String rootTempPath;
@@ -289,6 +290,15 @@ public class GlobalOptions {
         instance.setCalculateNormalsExtension(command.hasOption(CommandOptions.EXT_CALCULATE_NORMALS.getLongName()));
         instance.setMetaDataExtension(command.hasOption(CommandOptions.EXT_META_DATA.getLongName()));
         instance.setWaterMaskExtension(command.hasOption(CommandOptions.EXT_WATER_MASK.getLongName()));
+
+        int defaultThreadCount = Math.max(1, (int) instance.getAvailableProcessors() / 2);
+        if (command.hasOption(CommandOptions.THREAD_COUNT.getLongName())) {
+            int threadCount = Integer.parseInt(command.getOptionValue(CommandOptions.THREAD_COUNT.getLongName()));
+            instance.setThreadCount(Math.max(1, threadCount));
+        } else {
+            instance.setThreadCount(defaultThreadCount);
+        }
+
         printGlobalOptions();
     }
 
@@ -339,6 +349,7 @@ public class GlobalOptions {
         log.info("Tiling Mosaic Size: {}", instance.getMosaicSize());
         log.info("Tiling Max Raster Size: {}", instance.getMaxRasterSize());
         log.info("Layer Json Generate: {}", instance.isLayerJsonGenerate());
+        log.info("Thread Count: {}", instance.getThreadCount());
         log.info("Debug Mode: {}", instance.isDebugMode());
         Mago3DTerrainerMain.drawLine();
     }

@@ -40,6 +40,9 @@ public enum CommandOptions {
     EXT_META_DATA("metadata", "md", false, "[Experimental] Generate metadata for the terrain data."),
     EXT_WATER_MASK("waterMask", "wm", false, "[Experimental] Generate water mask for the terrain data."),
 
+    // Performance options
+    THREAD_COUNT("threads", "p", true, "Set number of parallel threads for preprocessing.\n(default: half of available processors)"),
+
     // Debug options
     DEBUG("debug", "d", false, "[DEBUG] Print more detailed logs.");
 
